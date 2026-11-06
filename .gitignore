@@ -1,0 +1,18 @@
+# 运行配置（含数据库密码）
+config/config.php
+
+# 安装锁
+install/install.lock
+
+# 用户上传的附件与备份
+storage/uploads/*
+!storage/uploads/README.txt
+storage/backups/*
+!storage/backups/README.txt
+storage/logs/*
+!storage/logs/README.txt
+
+# 系统文件
+.DS_Store
+Thumbs.db
+*.log

@@ -1,0 +1,113 @@
+# =============================================================
+# MES系统知识库 —— Nginx 站点配置示例
+# 适配 Nginx 1.20+ / Rocky Linux 8+ / PHP-FPM 7.4 或 8.0
+#
+# 使用方法：
+#   1. 复制到 /etc/nginx/conf.d/mes-kb.conf
+#   2. 修改 server_name、root、fastcgi_pass 中的 PHP 版本号
+#   3. nginx -t && systemctl reload nginx
+#
+# ©Yangzengrong 版权所有
+# =============================================================
+
+server {
+    listen       80;
+    server_name  mes-kb.local;
+
+    # 指向项目根目录（必须指向根目录，前台入口 index.php 位于此处）
+    root  /www/wwwroot/mes-kb;
+    index index.php index.html;
+
+    charset utf-8;
+    client_max_body_size 64m;
+
+    access_log /var/log/nginx/mes-kb.access.log;
+    error_log  /var/log/nginx/mes-kb.error.log;
+
+    # ---------- 禁止访问敏感目录 ----------
+    location ~ ^/(app|config|views|storage)/ {
+        deny all;
+        return 404;
+    }
+
+    # ---------- 禁止访问隐藏文件 ----------
+    location ~ /\.(?!well-known) {
+        deny all;
+        return 404;
+    }
+
+    # ---------- 禁止访问说明/示例/备份等非运行文件 ----------
+    # README.md、nginx.conf.sample、*.sql / *.bak 会泄露内部目录结构与部署细节，
+    # 生产环境必须屏蔽。config/ 目录内的文件由上面的目录规则覆盖。
+    # 注意：静态资源仅使用 .css / .js / 图片，不受本规则影响。
+    location ~* \.(md|markdown|sample|sql|bak|log|sh|ini|yml|yaml|lock|zip|tar|gz|tgz|conf|txt)$ {
+        deny all;
+        return 404;
+    }
+
+    # 带时间戳的编辑器备份，如 config.php.bak-20260910-144253
+    location ~* \.bak[-.][0-9]+$ {
+        deny all;
+        return 404;
+    }
+
+    # ---------- 后台入口：域名 + /admin ----------
+    # 后台自身通过 .php 入口文件访问，无需额外重写规则
+    location /admin/ {
+        try_files $uri $uri/ /admin/index.php?$query_string;
+    }
+
+    location /install/ {
+        # 仅允许本机访问（部署脚本通过 http://127.0.0.1 调用向导）。
+        # 安装完成后必须删除 install 目录；若需临时从浏览器重新安装，
+        # 请注释掉下面的 allow/deny 三行。
+        allow 127.0.0.1;
+        allow ::1;
+        deny all;
+        try_files $uri $uri/ /install/index.php?$query_string;
+    }
+
+    # ---------- 静态资源缓存 ----------
+    location /static/ {
+        expires 7d;
+        add_header Cache-Control "public";
+        access_log off;
+    }
+
+    # ---------- 前台伪静态 ----------
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    # ---------- PHP 处理 ----------
+    location ~ \.php$ {
+        try_files $uri =404;
+        fastcgi_pass   unix:/run/php-fpm/www.sock;
+        fastcgi_index  index.php;
+        fastcgi_param  SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        include        fastcgi_params;
+        fastcgi_read_timeout 120s;
+
+        # 附件上传需要，与 php.ini 保持一致
+        fastcgi_param  PHP_VALUE "upload_max_filesize=64M
+                                  post_max_size=64M
+                                  max_execution_time=120";
+    }
+
+    # ---------- 安全响应头 ----------
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header Referrer-Policy "same-origin" always;
+
+    # 隐藏 Nginx 版本号
+    server_tokens off;
+}
+
+# ---------- 生产环境建议启用 HTTPS ----------
+# server {
+#     listen 443 ssl http2;
+#     server_name mes-kb.example.com;
+#     ssl_certificate     /etc/nginx/ssl/mes-kb.crt;
+#     ssl_certificate_key /etc/nginx/ssl/mes-kb.key;
+#     # 其余配置与上方 server 块一致
+# }

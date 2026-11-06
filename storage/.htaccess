@@ -1,0 +1,9 @@
+# 附件与备份文件一律通过 PHP 控制器（FileController）鉴权后输出，
+# 禁止浏览器直接访问本目录，避免绕过权限校验。
+<IfModule mod_authz_core.c>
+    Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+</IfModule>
