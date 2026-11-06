@@ -1,5 +1,17 @@
 # MES系统知识库
 
+<p align="center">
+  <a href="README.en.md">English</a> · 简体中文
+</p>
+
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
+  <img src="https://img.shields.io/badge/PHP-7.4%20%2F%208.0-777BB4?logo=php&logoColor=white" alt="PHP 7.4 / 8.0">
+  <img src="https://img.shields.io/badge/Platform-Linux%20%2F%20Nginx-009639" alt="Linux / Nginx">
+  <img src="https://img.shields.io/badge/No%20External%20CDN-friendly-green" alt="No External CDN">
+  <a href="README.en.md"><img src="https://img.shields.io/badge/docs-English-blue" alt="English docs"></a>
+</p>
+
 面向生产 MES 系统运维场景的故障知识库管理系统，用于沉淀设备故障、程序报错、流程异常、操作失误等各类故障的处置经验，支撑运维人员快速检索与复用解决方案。
 
 - **技术架构**：PHP 7.4 / 8.0 + MySQL 5.7 / 8.0（原生 PDO 预处理，无框架依赖）
